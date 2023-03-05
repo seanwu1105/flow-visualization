@@ -5,6 +5,7 @@
     "source.fixAll": true,
     "source.organizeImports": true
   },
+  "prettier.proseWrap": "always",
   "[python]": {
     "editor.defaultFormatter": "ms-python.python"
   },
