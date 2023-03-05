@@ -125,5 +125,6 @@ produced this dataset used adaptive mesh refinement, which explains the vast
 discrepancies that exist between the resolution of the mesh next to the wing and
 further away from it.
 
-Get the data from
-[here](https://www.cs.purdue.edu/homes/cs530/projects/project4.html).
+Get the data (`vfem.vtu` and `vfrm.vtp`) from
+[here](https://www.cs.purdue.edu/homes/cs530/projects/project4.html) or from
+[the GitHub Release](https://github.com/seanwu1105/flow-visualization/releases/tag/v0.1.0).
