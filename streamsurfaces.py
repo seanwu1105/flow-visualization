@@ -1,8 +1,7 @@
 from vtkmodules.vtkCommonTransforms import vtkTransform
-from vtkmodules.vtkFiltersCore import vtkTubeFilter
-from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
+from vtkmodules.vtkFiltersFlowPaths import vtkStreamSurface
 from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
-from vtkmodules.vtkFiltersSources import vtkPlaneSource
+from vtkmodules.vtkFiltersSources import vtkLineSource
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 from vtkmodules.vtkRenderingCore import vtkActor, vtkDataSetMapper
@@ -18,13 +17,10 @@ def main():
     args = parse_args()
     vfem_filename = args.vfem
 
-    seeds = vtkPlaneSource()
-    seeds.SetResolution(8, 8)
+    seeds = vtkLineSource()
 
     trans = vtkTransform()
     trans.RotateY(90)
-    trans.Scale(0.5, 1, 1)
-    trans.Translate(0.3, 0, 0)
 
     tpd_filter = vtkTransformPolyDataFilter()
     tpd_filter.SetInputConnection(seeds.GetOutputPort())
@@ -33,19 +29,17 @@ def main():
     reader = vtkXMLUnstructuredGridReader()
     reader.SetFileName(vfem_filename)
 
-    streamline = vtkStreamTracer()
-    streamline.SetSourceConnection(tpd_filter.GetOutputPort())
-    streamline.SetInputConnection(reader.GetOutputPort())
-
-    tube = vtkTubeFilter()
-    tube.SetInputConnection(streamline.GetOutputPort())
-    tube.SetRadius(0.01)
-    tube.Update()
-    tube_range: tuple[float, float] = streamline.GetOutput().GetScalarRange()
+    stream_surface = vtkStreamSurface()
+    stream_surface.SetSourceConnection(tpd_filter.GetOutputPort())
+    stream_surface.SetInputConnection(reader.GetOutputPort())
+    stream_surface.Update()
+    stream_surface_range: tuple[
+        float, float
+    ] = stream_surface.GetOutput().GetScalarRange()
 
     mapper = vtkDataSetMapper()
-    mapper.SetInputConnection(tube.GetOutputPort())
-    mapper.SetScalarRange(tube_range)
+    mapper.SetInputConnection(stream_surface.GetOutputPort())
+    mapper.SetScalarRange(stream_surface_range)
 
     actor = vtkActor()
     actor.SetMapper(mapper)

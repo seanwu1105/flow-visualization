@@ -19,26 +19,26 @@ def main():
     seeds.SetResolution(15, 15)
     seeds.SetNormal(1, 0, 0)
 
-    vfem_reader = vtkXMLUnstructuredGridReader()
-    vfem_reader.SetFileName(vfem_filename)
+    reader = vtkXMLUnstructuredGridReader()
+    reader.SetFileName(vfem_filename)
 
     streamline = vtkStreamTracer()
     streamline.SetSourceConnection(seeds.GetOutputPort())
-    streamline.SetInputConnection(vfem_reader.GetOutputPort())
+    streamline.SetInputConnection(reader.GetOutputPort())
     streamline.Update()
     streamline_range: tuple[float, float] = streamline.GetOutput().GetScalarRange()
 
-    streamline_mapper = vtkDataSetMapper()
-    streamline_mapper.SetInputConnection(streamline.GetOutputPort())
-    streamline_mapper.SetScalarRange(streamline_range)
+    mapper = vtkDataSetMapper()
+    mapper.SetInputConnection(streamline.GetOutputPort())
+    mapper.SetScalarRange(streamline_range)
 
-    streamline_actor = vtkActor()
-    streamline_actor.SetMapper(streamline_mapper)
+    actor = vtkActor()
+    actor.SetMapper(mapper)
 
     scalar_bar = vtkScalarBarActor()
-    scalar_bar.SetLookupTable(streamline_mapper.GetLookupTable())  # type: ignore
+    scalar_bar.SetLookupTable(mapper.GetLookupTable())  # type: ignore
 
-    build_window([streamline_actor, build_wing_actor(args.wing)], [scalar_bar]).Start()
+    build_window([actor, build_wing_actor(args.wing)], [scalar_bar]).Start()
 
 
 if __name__ == "__main__":
