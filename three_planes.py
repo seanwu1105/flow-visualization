@@ -1,17 +1,13 @@
-from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkCommonExecutionModel import vtkAlgorithmOutput
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import vtkGlyph3D, vtkProbeFilter
 from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
 from vtkmodules.vtkFiltersSources import vtkArrowSource, vtkPlaneSource
-from vtkmodules.vtkIOXML import vtkXMLPolyDataReader, vtkXMLUnstructuredGridReader
-from vtkmodules.vtkRenderingCore import (
-    vtkActor,
-    vtkDataSetMapper,
-    vtkRenderer,
-    vtkRenderWindow,
-    vtkRenderWindowInteractor,
-)
+from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
+from vtkmodules.vtkRenderingCore import vtkActor, vtkDataSetMapper
 
+from src.build_window import build_window
+from src.build_wing_actor import build_wing_actor
 from src.parse_args import parse_args
 from src.vtk_side_effects import import_for_rendering_core
 
@@ -20,41 +16,22 @@ def main():
     import_for_rendering_core()
     args = parse_args()
     vfem_filename = args.vfem
-    wing_filename = args.wing
-
-    wing_reader = vtkXMLPolyDataReader()
-    wing_reader.SetFileName(wing_filename)
-
-    wing_mapper = vtkDataSetMapper()
-    wing_mapper.SetInputConnection(wing_reader.GetOutputPort())
-
-    wing_actor = vtkActor()
-    wing_actor.SetMapper(wing_mapper)
 
     vfem_reader = vtkXMLUnstructuredGridReader()
     vfem_reader.SetFileName(vfem_filename)
 
     plane_x_coords = [0.05, 0.4, 0.6]
+    arrow_actors = [
+        build_arrow_plane_actor(vfem_reader.GetOutputPort(), x) for x in plane_x_coords
+    ]
 
-    renderer = vtkRenderer()
-
-    for x in plane_x_coords:
-        renderer.AddActor(build_arrow_plane_actor(vfem_reader, x))
-
-    renderer.AddActor(wing_actor)
-    colors = vtkNamedColors()
-    renderer.SetBackground(colors.GetColor3d("Gray"))  # type: ignore
-
-    render_window = vtkRenderWindow()
-    render_window.AddRenderer(renderer)
-    render_window.SetSize(640, 480)
-
-    interactor = vtkRenderWindowInteractor()
-    interactor.SetRenderWindow(render_window)
-    interactor.Start()
+    build_window(
+        [build_wing_actor(args.wing)] + arrow_actors,
+        [],
+    ).Start()
 
 
-def build_arrow_plane_actor(reader: vtkXMLUnstructuredGridReader, x: float):
+def build_arrow_plane_actor(reader_output_port: vtkAlgorithmOutput, x: float):
     plane = vtkPlaneSource()
     plane.SetResolution(40, 40)
 
@@ -68,7 +45,7 @@ def build_arrow_plane_actor(reader: vtkXMLUnstructuredGridReader, x: float):
 
     probe_filter = vtkProbeFilter()
     probe_filter.SetInputConnection(tpd_filter.GetOutputPort())
-    probe_filter.SetSourceConnection(reader.GetOutputPort())
+    probe_filter.SetSourceConnection(reader_output_port)
 
     arrow_source = vtkArrowSource()
     arrow_source.SetShaftResolution(20)
@@ -83,7 +60,6 @@ def build_arrow_plane_actor(reader: vtkXMLUnstructuredGridReader, x: float):
 
     arrow_mapper = vtkDataSetMapper()
     arrow_mapper.SetInputConnection(arrow_glyph_filter.GetOutputPort())
-    arrow_mapper.SetScalarRange(reader.GetOutput().GetScalarRange())  # type: ignore
 
     arrow_actor = vtkActor()
     arrow_actor.SetMapper(arrow_mapper)

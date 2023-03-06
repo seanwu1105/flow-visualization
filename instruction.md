@@ -69,9 +69,9 @@ be provided for reference. Show the delta wing geometry in each image for
 context.
 
 ```sh
-streamlines <vfem.vtu> <wing.vtp>
-streamtubes <vfem.vtu> <wing.vtp>
-streamsurfaces <vfem.vtu> <wing.vtp>
+python streamlines <vfem.vtu> <wing.vtp>
+python streamtubes <vfem.vtu> <wing.vtp>
+python streamsurfaces <vfem.vtu> <wing.vtp>
 ```
 
 Report: Explain in the report how the seeding locations were chosen for each of
