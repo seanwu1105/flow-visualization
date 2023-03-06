@@ -8,7 +8,9 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 
-def build_window(actors: list[vtkActor], actors_2d: list[vtkActor2D]):
+def build_window(
+    actors: list[vtkActor], actors_2d: list[vtkActor2D], depth_peeling: bool = False
+):
     renderer = vtkRenderer()
     for actor in actors:
         renderer.AddActor(actor)
@@ -23,4 +25,12 @@ def build_window(actors: list[vtkActor], actors_2d: list[vtkActor2D]):
 
     interactor = vtkRenderWindowInteractor()
     interactor.SetRenderWindow(render_window)
+
+    if depth_peeling:
+        render_window.SetAlphaBitPlanes(True)
+        render_window.SetMultiSamples(0)
+        renderer.SetUseDepthPeeling(True)
+        renderer.SetMaximumNumberOfPeels(100)
+        renderer.SetOcclusionRatio(0.0)
+
     return interactor
