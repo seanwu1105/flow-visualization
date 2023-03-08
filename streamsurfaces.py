@@ -2,13 +2,12 @@ from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersFlowPaths import vtkStreamSurface
 from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
 from vtkmodules.vtkFiltersSources import vtkLineSource
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
-from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-from vtkmodules.vtkRenderingCore import vtkActor, vtkDataSetMapper
 
+from src.build_velocity_actor import build_velocity_actor
 from src.build_window import build_window
 from src.build_wing_actor import build_wing_actor
 from src.parse_args import parse_args
+from src.read_vfem_velocity import read_vfem_velocity
 from src.vtk_side_effects import import_for_rendering_core
 
 
@@ -17,37 +16,33 @@ def main():
     args = parse_args()
     vfem_filename = args.vfem
 
+    reader, velocity_range = read_vfem_velocity(vfem_filename)
+
     seeds = vtkLineSource()
+    seeds.SetResolution(300)
 
     trans = vtkTransform()
     trans.RotateY(90)
+    trans.Scale(0.25, 1, 1)
+    trans.Translate(0.25, 0.04, 0)
 
     tpd_filter = vtkTransformPolyDataFilter()
     tpd_filter.SetInputConnection(seeds.GetOutputPort())
     tpd_filter.SetTransform(trans)
 
-    reader = vtkXMLUnstructuredGridReader()
-    reader.SetFileName(vfem_filename)
-
     stream_surface = vtkStreamSurface()
     stream_surface.SetSourceConnection(tpd_filter.GetOutputPort())
     stream_surface.SetInputConnection(reader.GetOutputPort())
-    stream_surface.Update()
-    stream_surface_range: tuple[
-        float, float
-    ] = stream_surface.GetOutput().GetScalarRange()
 
-    mapper = vtkDataSetMapper()
-    mapper.SetInputConnection(stream_surface.GetOutputPort())
-    mapper.SetScalarRange(stream_surface_range)
+    actor, scalar_bar = build_velocity_actor(
+        stream_surface.GetOutputPort(), velocity_range
+    )
 
-    actor = vtkActor()
-    actor.SetMapper(mapper)
+    actor.GetProperty().SetOpacity(0.5)
 
-    scalar_bar = vtkScalarBarActor()
-    scalar_bar.SetLookupTable(mapper.GetLookupTable())  # type: ignore
-
-    build_window([actor, build_wing_actor(args.wing)], [scalar_bar]).Start()
+    build_window(
+        [actor, build_wing_actor(args.wing)], [scalar_bar], depth_peeling=True
+    ).Start()
 
 
 if __name__ == "__main__":

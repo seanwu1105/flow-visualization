@@ -1,15 +1,12 @@
-from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersCore import vtkTubeFilter
 from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
-from vtkmodules.vtkFiltersGeneral import vtkTransformPolyDataFilter
-from vtkmodules.vtkFiltersSources import vtkPlaneSource
-from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
-from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-from vtkmodules.vtkRenderingCore import vtkActor, vtkDataSetMapper
 
+from src.build_seeds_around_vortices import build_source_around_vortices
+from src.build_velocity_actor import build_velocity_actor
 from src.build_window import build_window
 from src.build_wing_actor import build_wing_actor
 from src.parse_args import parse_args
+from src.read_vfem_velocity import read_vfem_velocity
 from src.vtk_side_effects import import_for_rendering_core
 
 
@@ -18,40 +15,19 @@ def main():
     args = parse_args()
     vfem_filename = args.vfem
 
-    seeds = vtkPlaneSource()
-    seeds.SetResolution(8, 8)
+    reader, velocity_range = read_vfem_velocity(vfem_filename)
 
-    trans = vtkTransform()
-    trans.RotateY(90)
-    trans.Scale(0.5, 1, 1)
-    trans.Translate(0.3, 0, 0)
-
-    tpd_filter = vtkTransformPolyDataFilter()
-    tpd_filter.SetInputConnection(seeds.GetOutputPort())
-    tpd_filter.SetTransform(trans)
-
-    reader = vtkXMLUnstructuredGridReader()
-    reader.SetFileName(vfem_filename)
+    source = build_source_around_vortices(10)
 
     streamline = vtkStreamTracer()
-    streamline.SetSourceConnection(tpd_filter.GetOutputPort())
+    streamline.SetSourceConnection(source.GetOutputPort())
     streamline.SetInputConnection(reader.GetOutputPort())
 
     tube = vtkTubeFilter()
     tube.SetInputConnection(streamline.GetOutputPort())
-    tube.SetRadius(0.01)
-    tube.Update()
-    tube_range: tuple[float, float] = streamline.GetOutput().GetScalarRange()
+    tube.SetRadius(0.005)
 
-    mapper = vtkDataSetMapper()
-    mapper.SetInputConnection(tube.GetOutputPort())
-    mapper.SetScalarRange(tube_range)
-
-    actor = vtkActor()
-    actor.SetMapper(mapper)
-
-    scalar_bar = vtkScalarBarActor()
-    scalar_bar.SetLookupTable(mapper.GetLookupTable())  # type: ignore
+    actor, scalar_bar = build_velocity_actor(tube.GetOutputPort(), velocity_range)
 
     build_window([actor, build_wing_actor(args.wing)], [scalar_bar]).Start()
 
