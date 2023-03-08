@@ -47,7 +47,7 @@ def main():
 
     contour_actor = vtkActor()
     contour_actor.SetMapper(contour_mapper)
-    contour_actor.GetProperty().SetOpacity(0.1)
+    contour_actor.GetProperty().SetOpacity(0.25)
 
     build_window(
         [build_wing_actor(wing_filename), streamline_actor, contour_actor],

@@ -27,9 +27,16 @@ Activate the virtual environment:
 poetry shell
 ```
 
-Execute the application:
+Execute the applications with the following commands for different visualization
+tasks:
 
-!! TODO !!
+```sh
+python three_planes.py <vfem.vtu> <wing.vtp>
+python streamlines.py <vfem.vtu> <wing.vtp>
+python streamtubes.py <vfem.vtu> <wing.vtp>
+python stteamsurfaces.py <vfem.vtu> <wing.vtp>
+python combined.py <vfem.vtu> <wing.vtp>
+```
 
 You can find the datasets in the `assets` directory.
 
