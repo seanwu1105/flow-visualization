@@ -22,9 +22,9 @@ def main():
     seeds.SetResolution(300)
 
     trans = vtkTransform()
-    trans.RotateY(90)
-    trans.Scale(0.25, 1, 1)
-    trans.Translate(0.25, 0.04, 0)
+    trans.RotateZ(90)
+    trans.Scale(0.1, 1, 1)
+    trans.Translate(0, 0, -0.015)
 
     tpd_filter = vtkTransformPolyDataFilter()
     tpd_filter.SetInputConnection(seeds.GetOutputPort())
